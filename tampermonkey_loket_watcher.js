@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name         Loket Ticket Watcher Simulation
+// @name         Loket Ticket Watcher
 // @namespace    ticket-sniper
-// @version      0.1
+// @version      1.0
 // @description  Reload Loket saat Full Booked, stop saat Sold Out atau status berubah
 // @match        https://widget.loket.com/widget/*
 // @match        https://widget.loket.com/*

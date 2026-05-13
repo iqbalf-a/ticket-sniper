@@ -1,6 +1,6 @@
 /**
- * watch_active_chrome.js
- * Reload tab Chrome aktif tanpa Puppeteer, tanpa profile baru.
+ * watch_clipboard_reload.js
+ * Reload tab Chrome aktif memakai Ctrl+A/Ctrl+C, tanpa Puppeteer dan tanpa profile baru.
  *
  * Cara kerja:
  *   1. Fokuskan window Chrome.
@@ -14,7 +14,7 @@
  *   Jangan pindah fokus window saat script berjalan.
  *
  * Usage:
- *   node watch_active_chrome.js
+ *   node watch_clipboard_reload.js
  */
 
 "use strict";

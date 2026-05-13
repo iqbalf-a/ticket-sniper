@@ -1,155 +1,153 @@
-# ticket-war
+# ticket-sniper
 
-Bot otomatisasi pembelian tiket untuk platform **Loket.com**, terdiri dari 2 skrip yang digunakan di kondisi berbeda.
-
----
+Tool kecil untuk memantau tiket Loket. Project ini punya 1 script pencari link dan 2 metode watcher untuk kondisi tiket sudah masuk halaman widget.
 
 ## Prasyarat
 
-- [Node.js](https://nodejs.org) v18 atau lebih baru
-- Google Chrome terinstall
-- Untuk `watch_ticket.js`: install dependensi dulu
+- Node.js v18 atau lebih baru
+- Google Chrome
+- Tampermonkey untuk metode utama watcher
+
+Install dependency hanya diperlukan kalau masih memakai `watch_ticket.js` legacy:
 
 ```bash
 npm install
 ```
 
----
+## File Utama
 
-## Dua Kondisi, Dua Skrip
-
-| Kondisi | Skrip yang dipakai |
+| File | Fungsi |
 |---|---|
-| Tiket **belum dijual** — halaman event belum ada tombol beli hari ini | `get_ticket_link.js` |
-| Tiket **sudah dijual tapi Full Booked** — perlu pantau slot yang batal | `watch_ticket.js` |
+| `get_ticket_link.js` | Polling halaman event sampai tombol tanggal hari ini aktif, lalu membuka link di beberapa profile Chrome. |
+| `tampermonkey_loket_watcher.js` | Userscript Tampermonkey. Metode utama untuk reload langsung dari tab Loket. |
+| `watch_clipboard_reload.js` | Metode backup. Membaca tab Chrome aktif via Ctrl+A/Ctrl+C dan reload via Ctrl+R. |
+| `watch_ticket.js` | Legacy Puppeteer watcher. Disimpan sebagai backup lama. |
 
----
+## 1. Cari Link Tiket
 
-## Skrip 1 — `get_ticket_link.js`
+Dipakai saat halaman event belum membuka tombol tanggal hari ini.
 
-### Kapan dipakai
-
-Dipakai saat tiket **belum mulai dijual**. Halaman event Loket menampilkan tombol per tanggal, tapi tombol hari ini masih `disabled`. Skrip ini akan polling terus sampai tombol hari ini aktif, lalu langsung membuka link tiketnya di semua Chrome profile sekaligus.
-
-### Cara pakai
-
-**Mode live (default):**
 ```bash
 node get_ticket_link.js
 ```
 
-**Mode file lokal (untuk testing):**
+Mode file lokal untuk testing:
+
 ```bash
-# 1. Buka halaman event di browser → Ctrl+S → simpan sebagai page.html
-# 2. Letakkan page.html di folder yang sama
 node get_ticket_link.js page.html
 ```
 
-### Konfigurasi
-
-Buka `get_ticket_link.js` dan ubah bagian Config di atas:
+Konfigurasi penting ada di bagian atas `get_ticket_link.js`:
 
 ```js
-const PAGE_URL = "https://dyandraglobalstore-05.com"; // URL halaman event
-
-const INTERVAL_MS = 100;    // Interval polling (ms)
-const RETRY_ON_ERROR = 5000; // Jeda jika fetch error (ms)
+const PAGE_URL = "https://dyandraglobalstore-04.com/#layout";
+const INTERVAL_MS = 100;
+const RETRY_ON_ERROR = 5000;
 
 const CHROME_PROFILES = [
-    "Default",    // Profile Chrome pertama
-    "Profile 1",  // Profile Chrome kedua
-    "Profile 2",  // Profile Chrome ketiga
-    "Profile 4",  // Profile Chrome keempat
+    "Default",
+    "Profile 1",
+    "Profile 2",
+    "Profile 4",
 ];
 ```
 
-> Nama profile Chrome bisa dicek di `chrome://version` → kolom **Profile Path** (bagian terakhir setelah backslash).
+## 2. Watcher Utama: Tampermonkey
 
-### Yang terjadi saat berhasil
+File:
 
-1. Skrip mencetak link tiket ke terminal
-2. Browser Chrome otomatis terbuka di **semua profile** sekaligus dengan link tersebut
-3. Skrip berhenti (`process.exit`)
+```text
+tampermonkey_loket_watcher.js
+```
 
----
+Cara pakai:
 
-## Skrip 2 — `watch_ticket.js`
+1. Install Tampermonkey di Chrome.
+2. Buka Tampermonkey, pilih `Create a new script`.
+3. Paste isi `tampermonkey_loket_watcher.js`.
+4. Save.
+5. Buka halaman widget Loket.
 
-### Kapan dipakai
+Logic watcher:
 
-Dipakai saat tiket **sudah bisa dibeli tapi statusnya Full Booked**. Skrip ini membuka browser nyata (bukan headless), lalu reload halaman widget terus-menerus sampai ada slot yang terbuka (pesanan dibatalkan orang lain).
+- Ada `Full Book`, `Full Booked`, `Fully Booked`, atau `Penuh`: reload terus.
+- Full Booked yang sebelumnya ada lalu hilang: stop, ubah title, tampilkan alert.
+- Ada quantity atau tombol beli/pesan/checkout: stop.
+- Ada `Sold Out`, `Habis Terjual`, atau `Terjual Habis`: stop.
 
-### Cara pakai
+Jika script tidak jalan, buka `chrome://extensions/`, masuk ke detail Tampermonkey, lalu aktifkan `Allow User Scripts`.
 
-**Pakai URL default (sudah di-hardcode):**
+## 3. Watcher Backup: Clipboard Reload
+
+File:
+
+```text
+watch_clipboard_reload.js
+```
+
+Cara pakai:
+
+1. Buka Chrome biasa.
+2. Buka dan fokuskan tab Loket.
+3. Jalankan:
+
+```bash
+node watch_clipboard_reload.js
+```
+
+Script akan:
+
+- Fokus ke Chrome.
+- Tekan Ctrl+A dan Ctrl+C untuk membaca teks halaman.
+- Reload tab aktif dengan Ctrl+R kalau ada Full Booked.
+- Stop kalau Sold Out, quantity muncul, atau status Full Booked berubah.
+
+Catatan:
+
+- Jangan pindah tab/window saat script berjalan.
+- Clipboard akan ketimpa isi halaman.
+
+Konfigurasi opsional:
+
+```powershell
+$env:WATCH_INTERVAL_MS=1000
+$env:COPY_WAIT_MS=300
+$env:AFTER_RELOAD_WAIT_MS=1500
+node watch_clipboard_reload.js
+```
+
+## 4. Legacy: Puppeteer Watcher
+
+`watch_ticket.js` adalah versi lama berbasis Puppeteer. File ini masih disimpan sebagai backup.
+
 ```bash
 node watch_ticket.js
 ```
 
-**Pakai URL widget custom:**
-```bash
-node watch_ticket.js https://widget.loket.com/widget/WIDGET_ID
-```
-
-**Pakai profile Chrome tertentu:**
-```bash
-node watch_ticket.js https://widget.loket.com/widget/WIDGET_ID "Profile 1"
-```
-
-**Jalankan 2 profil sekaligus** — buka 2 terminal, jalankan masing-masing:
-```bash
-# Terminal 1
-node watch_ticket.js URL "Default"
-
-# Terminal 2
-node watch_ticket.js URL "Profile 1"
-```
-
-### Konfigurasi
-
-```js
-const WIDGET_URL = "...";   // URL widget Loket (bisa di-override via argumen)
-const INTERVAL_MS = 0;      // 0 = reload secepat mungkin, atau isi nilai ms untuk jeda
-```
-
-### Perhatian sebelum menjalankan
-
-> **Chrome harus ditutup dulu** sebelum menjalankan skrip ini.
-> Puppeteer akan launch Chrome sendiri menggunakan profile yang dipilih.
-> Jika Chrome sedang terbuka dengan profile yang sama, skrip akan error.
-
-### Kondisi berhenti
-
-| Kondisi | Yang terjadi |
-|---|---|
-| Ada tiket yang tadinya **Full Booked** → sekarang **tersedia** | Skrip berhenti, window Chrome tetap terbuka → langsung beli |
-| Semua tiket **Sold Out** | Skrip berhenti dengan notifikasi |
-
----
-
-## Alur Penggunaan Lengkap
-
-```
-Tiket belum dijual?
-└── Jalankan get_ticket_link.js
-    └── Browser terbuka otomatis di semua profile dengan link tiket
-        └── Semua tiket Full Booked?
-            └── Jalankan watch_ticket.js di tiap terminal (1 per profile)
-                └── Ada slot terbuka → selesaikan pembelian di window yang sudah terbuka
-```
-
----
+Jika memakai file ini, jalankan `npm install` terlebih dahulu.
 
 ## Troubleshooting
 
-**`get_ticket_link.js`: Fetch gagal terus**
-- Cek koneksi internet
-- Coba simpan halaman manual sebagai `page.html` dan pakai mode lokal
+### Tampermonkey tidak muncul log
 
-**`watch_ticket.js`: Chrome tidak ditemukan**
-- Pastikan Chrome terinstall di path default
-- Atau edit variabel `CHROME_PATHS_WIN` di dalam skrip dengan path Chrome yang benar
+Pastikan:
 
-**`watch_ticket.js`: Error saat launch browser**
-- Pastikan semua window Chrome sudah ditutup sebelum menjalankan skrip
-- Cek nama profile di `chrome://version`
+- Script sudah enabled.
+- Match URL mencakup halaman `https://widget.loket.com/...`.
+- `Allow User Scripts` aktif di detail extension Tampermonkey.
+
+### Clipboard watcher tidak reload
+
+Pastikan:
+
+- Tab Loket sedang aktif.
+- Window Chrome tidak kehilangan fokus.
+- Jangan klik aplikasi lain saat script berjalan.
+
+### `get_ticket_link.js` fetch gagal
+
+Coba simpan halaman manual sebagai `page.html`, lalu jalankan:
+
+```bash
+node get_ticket_link.js page.html
+```
