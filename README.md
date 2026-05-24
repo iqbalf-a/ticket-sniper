@@ -19,6 +19,7 @@ npm install
 | File | Fungsi |
 |---|---|
 | `get_ticket_link.js` | Polling halaman event sampai tombol tanggal hari ini aktif, lalu membuka link di beberapa profile Chrome. |
+| `get_ticket_link_join_queue.js` | Versi tambahan: setelah link ketemu, buka Chrome dan pantau tab aktif sampai teks `Join Queue` muncul setelah verifikasi manual. |
 | `tampermonkey_loket_watcher.js` | Userscript Tampermonkey. Metode utama untuk reload langsung dari tab Loket. |
 | `watch_clipboard_reload.js` | Metode backup. Membaca tab Chrome aktif via Ctrl+A/Ctrl+C dan reload via Ctrl+R. |
 | `watch_ticket.js` | Legacy Puppeteer watcher. Disimpan sebagai backup lama. |
@@ -36,6 +37,14 @@ Mode file lokal untuk testing:
 ```bash
 node get_ticket_link.js page.html
 ```
+
+Versi dengan helper Join Queue:
+
+```bash
+node get_ticket_link_join_queue.js
+```
+
+Catatan: script ini tidak menyelesaikan verifikasi robot/CAPTCHA. Selesaikan verifikasi manual di browser. Setelah teks `Join Queue` muncul di tab Chrome aktif, script akan memberi notifikasi agar tombol diklik manual.
 
 Konfigurasi penting ada di bagian atas `get_ticket_link.js`:
 
@@ -70,10 +79,21 @@ Cara pakai:
 
 Logic watcher:
 
-- Ada `Full Book`, `Full Booked`, `Fully Booked`, atau `Penuh`: reload terus.
-- Full Booked yang sebelumnya ada lalu hilang: stop, ubah title, tampilkan alert.
-- Ada quantity atau tombol beli/pesan/checkout: stop.
-- Ada `Sold Out`, `Habis Terjual`, atau `Terjual Habis`: stop.
+- Saat pertama jalan, script akan meminta target tiket.
+- Contoh target: `cat 1`, `cat 1, cat 2`, `duality package`.
+- Kosongkan atau isi `all` untuk memantau semua card tiket.
+- Ada `Full Book`, `Full Booked`, `Fully Booked`, atau `Penuh` pada target: reload terus.
+- Full Booked target yang sebelumnya ada lalu hilang: stop, ubah title, tampilkan alert.
+- Ada quantity atau tombol beli/pesan/checkout pada target: stop.
+- Semua target `Sold Out`, `Habis Terjual`, atau `Terjual Habis`: stop.
+
+Untuk mengganti target, buka DevTools Console di halaman Loket lalu jalankan:
+
+```js
+ticketSniperSetTargets()
+```
+
+Halaman akan reload dan script akan meminta target baru.
 
 Jika script tidak jalan, buka `chrome://extensions/`, masuk ke detail Tampermonkey, lalu aktifkan `Allow User Scripts`.
 
