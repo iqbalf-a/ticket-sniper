@@ -18,9 +18,9 @@ const { openAndBook }  = require("./book");
 
 // const PRODUCT_SLUG    = "theweekndinjakarta-generalonsaleday2";
 const PRODUCT_SLUG    = "bts-jakarta-day1";
-const PACKAGE_CODES   = ["1"];     // semua kode paket target dari API (packageCodes[] di tier, atau packages[].code)
-const PACKAGE_HASH    = "3";       // index hash di URL: buka /packages → klik paket → lihat #pricetierDetail-{n}
-const PACKAGE_NAME    = "GOLD VIP PACKAGE";  // display only — tidak mempengaruhi logika
+const PACKAGE_CODES   = ["16"];     // semua kode paket target dari API (packageCodes[] di tier, atau packages[].code)
+const PACKAGE_HASH    = "16";       // index hash di URL: buka /packages → klik paket → lihat #pricetierDetail-{n}
+const PACKAGE_NAME    = "VIP PACKAGE B - WEVERSE";  // display only — tidak mempengaruhi logika
 const TARGET_QTY      = 3;         // jumlah tiket yang akan dibooking (klik + sebanyak TARGET_QTY-1)
 
 // Isi dengan cookie dari browser (DevTools → Network → request ke tiket.com → Request Headers → Cookie)
