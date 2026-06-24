@@ -1,5 +1,8 @@
 {
   "dependencies": {
-    "puppeteer-core": "^24.43.0"
+    "jimp": "^0.22.12",
+    "playwright-core": "^1.52.0",
+    "puppeteer-core": "^24.43.0",
+    "tesseract.js": "^7.0.0"
   }
 }
